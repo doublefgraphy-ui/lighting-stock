@@ -1,28 +1,252 @@
+(() => {
+  "use strict";
 
-(()=>{
-const data=window.DUOMO_DATA||[],meta=window.DUOMO_META||{};
-const $=s=>document.querySelector(s);
-const els={search:$('#search'),clear:$('#clearSearch'),brand:$('#brandFilter'),type:$('#typeFilter'),stock:$('#stockFilter'),sheet:$('#sheetFilter'),results:$('#results'),empty:$('#empty'),shown:$('#shownCount'),inc:$('#inCount'),outc:$('#outCount'),updated:$('#updated'),dialog:$('#detailDialog'),body:$('#dialogBody'),top:$('#topBtn')};
-const fmt=new Intl.NumberFormat('ko-KR');
-const text=v=>(v??'').toString();
-const escapeHTML=s=>text(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-const unique=k=>[...new Set(data.map(x=>text(x[k]).trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko'));
-function fillSelect(el,vals){vals.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o)})}
-fillSelect(els.brand,unique('brand'));fillSelect(els.type,unique('type'));fillSelect(els.sheet,unique('sheet'));
-els.updated.textContent=`${meta.generated||''} 생성 · ${fmt.format(meta.count||data.length)}개 항목`;
-function status(r){if(typeof r.stock==='number'){if(r.stock<=0)return ['out','품절'];if(r.stock<=5)return ['low',`${fmt.format(r.stock)}개`];return ['in',`${fmt.format(r.stock)}개`]}if(r.stockText)return ['unknown',r.stockText];return ['unknown','미표기']}
-function money(r){if(typeof r.price==='number')return `${fmt.format(r.price)}원`;return r.priceText||'가격 미표기'}
-function searchable(r){return [r.brand,r.type,r.product,r.option,r.code,r.size,r.sheet,r.remarks,r.display].join(' ').toLowerCase()}
-function filtered(){const q=els.search.value.trim().toLowerCase(),b=els.brand.value,t=els.type.value,s=els.stock.value,sh=els.sheet.value;return data.filter(r=>{if(q&&!searchable(r).includes(q))return false;if(b&&r.brand!==b)return false;if(t&&r.type!==t)return false;if(sh&&r.sheet!==sh)return false;const st=status(r)[0];if(s==='in'&&!(typeof r.stock==='number'&&r.stock>0))return false;if(s==='low'&&!(typeof r.stock==='number'&&r.stock>0&&r.stock<=5))return false;if(s==='out'&&!(typeof r.stock==='number'&&r.stock<=0))return false;if(s==='unknown'&&typeof r.stock==='number')return false;return true})}
-function card(r){const st=status(r),img=r.images&&r.images[0]?`<img loading="lazy" src="${escapeHTML(r.images[0])}" alt="${escapeHTML(r.product)}">`:'<span class="no-image">NO IMAGE</span>';return `<article class="card"><div class="card-image">${img}<span class="sheet-tag">${escapeHTML(r.sheet)}</span></div><div class="card-body"><div class="meta">${escapeHTML(r.brand)}${r.type?' · '+escapeHTML(r.type):''}</div><h2>${escapeHTML(r.product||r.option||'제품명 미표기')}</h2><p class="option">${escapeHTML(r.option||r.size||'')}</p><p class="code">${r.code?'CODE '+escapeHTML(r.code):'&nbsp;'}</p><div class="bottom"><span class="price">${escapeHTML(money(r))}</span><span class="stock ${st[0]}">${escapeHTML(st[1])}</span></div></div><button class="open-detail" data-id="${escapeHTML(r.id)}" aria-label="상세보기"></button></article>`}
-function render(){const list=filtered();els.results.innerHTML=list.map(card).join('');els.empty.hidden=list.length>0;els.shown.textContent=fmt.format(list.length);els.inc.textContent=fmt.format(list.filter(r=>typeof r.stock==='number'&&r.stock>0).length);els.outc.textContent=fmt.format(list.filter(r=>typeof r.stock==='number'&&r.stock<=0).length);els.clear.style.display=els.search.value?'block':'none'}
-function detail(r){const st=status(r);const imgs=(r.images||[]).length?r.images.map(x=>`<img src="${escapeHTML(x)}" alt="${escapeHTML(r.product)}">`).join(''):'<div class="no-image" style="margin:auto">NO IMAGE</div>';const rows=[['브랜드',r.brand],['유형',r.type],['옵션',r.option],['사이즈',r.size],['제품 코드',r.code],['소비자가',money(r)],['가용 재고',st[1]],['입고 예정',r.arrival],['전시 현황',r.display],['원산지',r.origin]].filter(x=>x[1]);els.body.innerHTML=`<div class="detail-images">${imgs}</div><div class="detail-content"><div class="meta">${escapeHTML(r.brand)}${r.type?' · '+escapeHTML(r.type):''}</div><h2>${escapeHTML(r.product||'제품명 미표기')}</h2><p class="detail-option">${escapeHTML(r.option||'')}</p><dl class="detail-grid">${rows.map(([a,b])=>`<dt>${escapeHTML(a)}</dt><dd class="${a==='가용 재고'?'detail-stock':''}">${escapeHTML(b)}</dd>`).join('')}</dl>${r.remarks?`<div class="detail-note">${escapeHTML(r.remarks)}</div>`:''}<div class="source-note">원본: ${escapeHTML(r.sheet)} 시트 · ${r.row}행</div></div>`;els.dialog.showModal()}
-['input','change'].forEach(ev=>{[els.search,els.brand,els.type,els.stock,els.sheet].forEach(el=>el.addEventListener(ev,render))});
-els.clear.addEventListener('click',()=>{els.search.value='';els.search.focus();render()});
-$('#resetBtn').addEventListener('click',()=>{els.search.value='';els.brand.value='';els.type.value='';els.stock.value='';els.sheet.value='';render()});
-els.results.addEventListener('click',e=>{const b=e.target.closest('.open-detail');if(!b)return;const r=data.find(x=>x.id===b.dataset.id);if(r)detail(r)});
-$('.dialog-close').addEventListener('click',()=>els.dialog.close());els.dialog.addEventListener('click',e=>{if(e.target===els.dialog)els.dialog.close()});
-window.addEventListener('scroll',()=>els.top.classList.toggle('show',scrollY>500));els.top.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
-if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
-render();
+  const data = window.DUOMO_DATA || [];
+  const meta = window.DUOMO_META || {};
+  const $ = (selector) => document.querySelector(selector);
+  const fmt = new Intl.NumberFormat("ko-KR");
+
+  const els = {
+    search: $("#search"),
+    clear: $("#clearSearch"),
+    brand: $("#brandFilter"),
+    type: $("#typeFilter"),
+    stock: $("#stockFilter"),
+    sheet: $("#sheetFilter"),
+    results: $("#results"),
+    empty: $("#empty"),
+    shown: $("#shownCount"),
+    inCount: $("#inCount"),
+    outCount: $("#outCount"),
+    updated: $("#updated"),
+    dialog: $("#detailDialog"),
+    dialogBody: $("#dialogBody"),
+    top: $("#topBtn")
+  };
+
+  const text = (value) => (value ?? "").toString();
+  const escapeHTML = (value) => text(value).replace(/[&<>'"]/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "'": "&#39;",
+    '"': "&quot;"
+  })[char]);
+
+  const unique = (key) => [...new Set(
+    data.map((item) => text(item[key]).trim()).filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b, "ko"));
+
+  function fillSelect(element, values) {
+    values.forEach((value) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = value;
+      element.appendChild(option);
+    });
+  }
+
+  fillSelect(els.brand, unique("brand"));
+  fillSelect(els.type, unique("type"));
+  fillSelect(els.sheet, unique("sheet"));
+  els.updated.textContent = `${meta.generated || ""} 기준 · ${fmt.format(meta.count || data.length)}개 항목`;
+
+  function stockStatus(item) {
+    if (typeof item.stock === "number") {
+      if (item.stock <= 0) return { key: "out", label: "품절", detail: "재고 0개" };
+      if (item.stock <= 5) return { key: "low", label: `${fmt.format(item.stock)}개`, detail: `가용 재고 ${fmt.format(item.stock)}개` };
+      return { key: "in", label: `${fmt.format(item.stock)}개`, detail: `가용 재고 ${fmt.format(item.stock)}개` };
+    }
+    if (item.stockText) return { key: "unknown", label: item.stockText, detail: item.stockText };
+    return { key: "unknown", label: "미표기", detail: "재고 미표기" };
+  }
+
+  function money(item) {
+    if (typeof item.price === "number") return `${fmt.format(item.price)}원`;
+    return item.priceText || "가격 미표기";
+  }
+
+  function searchable(item) {
+    return [
+      item.brand,
+      item.type,
+      item.product,
+      item.option,
+      item.code,
+      item.size,
+      item.sheet,
+      item.remarks,
+      item.arrival,
+      item.category
+    ].join(" ").toLowerCase();
+  }
+
+  function filtered() {
+    const query = els.search.value.trim().toLowerCase();
+    const brand = els.brand.value;
+    const type = els.type.value;
+    const stock = els.stock.value;
+    const sheet = els.sheet.value;
+
+    return data.filter((item) => {
+      if (query && !searchable(item).includes(query)) return false;
+      if (brand && item.brand !== brand) return false;
+      if (type && item.type !== type) return false;
+      if (sheet && item.sheet !== sheet) return false;
+
+      if (stock === "in" && !(typeof item.stock === "number" && item.stock > 0)) return false;
+      if (stock === "low" && !(typeof item.stock === "number" && item.stock > 0 && item.stock <= 5)) return false;
+      if (stock === "out" && !(typeof item.stock === "number" && item.stock <= 0)) return false;
+      if (stock === "unknown" && typeof item.stock === "number") return false;
+      return true;
+    });
+  }
+
+  function specRow(label, value, className = "") {
+    if (value === undefined || value === null || text(value).trim() === "") return "";
+    return `<div class="spec-row ${className}"><span>${escapeHTML(label)}</span><strong>${escapeHTML(value)}</strong></div>`;
+  }
+
+  function notePreview(value) {
+    const raw = text(value).trim();
+    if (!raw) return "";
+    const clean = raw.split("\n").filter((line) => line.trim()).slice(0, 4).join("\n");
+    const isLong = raw.length > clean.length;
+    return `
+      <div class="note-box${isLong ? " is-long" : ""}">
+        <span class="note-label">NOTE</span>
+        <p>${escapeHTML(clean)}</p>
+        ${isLong ? '<button class="note-more" type="button">전체 비고 보기</button>' : ""}
+      </div>`;
+  }
+
+  function card(item) {
+    const status = stockStatus(item);
+    const images = Array.isArray(item.images) ? item.images : [];
+    const image = images[0]
+      ? `<img loading="lazy" src="${escapeHTML(images[0])}" alt="${escapeHTML(item.product)}">`
+      : '<span class="no-image">NO IMAGE</span>';
+    const imageCount = images.length > 1 ? `<span class="image-count">+${images.length - 1}</span>` : "";
+
+    return `
+      <article class="card" data-id="${escapeHTML(item.id)}">
+        <button class="thumb" type="button" aria-label="${escapeHTML(item.product)} 이미지 크게 보기">
+          ${image}
+          ${imageCount}
+        </button>
+
+        <div class="card-body">
+          <div class="badge-row">
+            <span class="badge dark">${escapeHTML(item.brand || item.sheet)}</span>
+            ${item.type ? `<span class="badge">${escapeHTML(item.type)}</span>` : ""}
+            <span class="stock-badge ${status.key}">${escapeHTML(status.label)}</span>
+          </div>
+
+          <h2 class="name">${escapeHTML(item.product || item.option || "제품명 미표기")}</h2>
+          ${item.option ? `<p class="option-name">${escapeHTML(item.option)}</p>` : ""}
+
+          <div class="price-block">
+            <span class="price-label">소비자가</span>
+            <strong class="price">${escapeHTML(money(item))}</strong>
+          </div>
+
+          <div class="spec">
+            ${specRow("OPTION", item.option)}
+            ${specRow("CODE", item.code)}
+            ${specRow("재고", status.detail, `stock-text ${status.key}`)}
+            ${specRow("입고 예정", item.arrival)}
+          </div>
+
+          ${notePreview(item.remarks)}
+        </div>
+      </article>`;
+  }
+
+  function render() {
+    const list = filtered();
+    els.results.innerHTML = list.map(card).join("");
+    els.empty.hidden = list.length > 0;
+    els.shown.textContent = fmt.format(list.length);
+    els.inCount.textContent = fmt.format(list.filter((item) => typeof item.stock === "number" && item.stock > 0).length);
+    els.outCount.textContent = fmt.format(list.filter((item) => typeof item.stock === "number" && item.stock <= 0).length);
+    els.clear.style.display = els.search.value ? "grid" : "none";
+  }
+
+  function openDetail(item) {
+    const status = stockStatus(item);
+    const images = Array.isArray(item.images) && item.images.length
+      ? item.images.map((source) => `<img src="${escapeHTML(source)}" alt="${escapeHTML(item.product)}">`).join("")
+      : '<div class="no-image modal-no-image">NO IMAGE</div>';
+
+    els.dialogBody.innerHTML = `
+      <div class="detail-images">${images}</div>
+      <div class="detail-content">
+        <div class="badge-row">
+          <span class="badge dark">${escapeHTML(item.brand || item.sheet)}</span>
+          ${item.type ? `<span class="badge">${escapeHTML(item.type)}</span>` : ""}
+          <span class="stock-badge ${status.key}">${escapeHTML(status.label)}</span>
+        </div>
+        <h2>${escapeHTML(item.product || "제품명 미표기")}</h2>
+        ${item.option ? `<p class="detail-option">${escapeHTML(item.option)}</p>` : ""}
+        <div class="detail-price">${escapeHTML(money(item))}</div>
+        <div class="detail-spec">
+          ${specRow("OPTION", item.option)}
+          ${specRow("CODE", item.code)}
+          ${specRow("재고", status.detail, `stock-text ${status.key}`)}
+          ${specRow("입고 예정", item.arrival)}
+        </div>
+        ${item.remarks ? `<div class="detail-note"><span>NOTE</span><p>${escapeHTML(item.remarks)}</p></div>` : ""}
+      </div>`;
+
+    els.dialog.showModal();
+  }
+
+  ["input", "change"].forEach((eventName) => {
+    [els.search, els.brand, els.type, els.stock, els.sheet].forEach((element) => {
+      element.addEventListener(eventName, render);
+    });
+  });
+
+  els.clear.addEventListener("click", () => {
+    els.search.value = "";
+    els.search.focus();
+    render();
+  });
+
+  $("#resetBtn").addEventListener("click", () => {
+    els.search.value = "";
+    els.brand.value = "";
+    els.type.value = "";
+    els.stock.value = "";
+    els.sheet.value = "";
+    render();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  $("#homeBtn").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+  els.results.addEventListener("click", (event) => {
+    const cardElement = event.target.closest(".card");
+    if (!cardElement) return;
+
+    const shouldOpen = event.target.closest(".thumb") || event.target.closest(".note-more");
+    if (!shouldOpen) return;
+
+    const item = data.find((row) => row.id === cardElement.dataset.id);
+    if (item) openDetail(item);
+  });
+
+  $(".dialog-close").addEventListener("click", () => els.dialog.close());
+  els.dialog.addEventListener("click", (event) => {
+    if (event.target === els.dialog) els.dialog.close();
+  });
+
+  window.addEventListener("scroll", () => els.top.classList.toggle("show", window.scrollY > 500));
+  els.top.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  }
+
+  render();
 })();
