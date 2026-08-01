@@ -3,7 +3,7 @@ window.PREORDER_CONFIG = {
 
   formKey: "lighting_stock_2026_inscale",
 
-  shopName: "lighting_stock_2026_inscale",
+  shopName: "Inscale LIGHTING STOCK",
   currency: "KRW",
   source: "lighting-stock-github-pages"
 };
