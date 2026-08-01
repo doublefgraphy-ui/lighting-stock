@@ -377,7 +377,7 @@
       requestId,
       submittedAt: new Date().toISOString(),
       source: config.source || "lighting-stock",
-      shopName: config.shopName || "DUOMO LIGHTING STOCK",
+      shopName: config.shopName || "INSCALE LIGHTING STOCK",
       pageUrl: location.href,
       referrer: document.referrer || "",
       userAgent: navigator.userAgent,
