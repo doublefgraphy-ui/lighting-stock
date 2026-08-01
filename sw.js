@@ -1,4 +1,4 @@
-const CACHE_NAME = "lighting-stock-preorder-v1";
+const CACHE_NAME = "lighting-stock-preorder-v3";
 const CORE_ASSETS = [
   "./",
   "./index.html",
