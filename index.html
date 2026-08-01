@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="LIGHTING STOCK">
-  <title>LIGHTING STOCK</title>
+  <title>LIGHTING STOCK · PRE-ORDER</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -17,10 +17,38 @@
       <span class="eyebrow">DUOMO</span>
       <span class="title">LIGHTING STOCK</span>
     </button>
-    <button id="resetBtn" class="reset-btn" type="button">초기화</button>
+
+    <div class="top-actions">
+      <button id="guideBtn" class="header-btn secondary" type="button">주문 안내</button>
+      <button id="resetBtn" class="header-btn secondary" type="button">초기화</button>
+      <button id="cartBtn" class="header-btn cart-trigger" type="button" aria-label="프리오더 목록 열기">
+        <span>프리오더</span>
+        <strong id="cartCount">0</strong>
+      </button>
+    </div>
   </header>
 
   <main class="wrap">
+    <section class="preorder-hero" aria-labelledby="preorderTitle">
+      <div>
+        <span class="section-kicker">PRE-ORDER REQUEST</span>
+        <h1 id="preorderTitle">원하는 제품을 선택해<br>프리오더를 신청하세요.</h1>
+      </div>
+      <div class="hero-copy">
+        <p>제품과 수량, 배송 또는 방문수령 정보를 접수하면 담당자가 제품 사양과 예상 일정을 확인해 개별 안내드립니다.</p>
+        <ol class="steps" aria-label="프리오더 진행 순서">
+          <li><span>01</span>제품 선택</li>
+          <li><span>02</span>신청서 작성</li>
+          <li><span>03</span>결제·발주 안내</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="notice-strip">
+      <strong>안내</strong>
+      <p>본 페이지는 결제가 진행되지 않는 프리오더 신청 접수 페이지입니다. 담당자 확인과 결제 완료 후 최종 주문이 확정됩니다.</p>
+    </section>
+
     <section class="search-panel">
       <div class="search-wrap">
         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
@@ -31,26 +59,25 @@
       <div class="filters">
         <select id="brandFilter" aria-label="브랜드"><option value="">전체 브랜드</option></select>
         <select id="typeFilter" aria-label="제품 유형"><option value="">전체 유형</option></select>
-        <select id="stockFilter" aria-label="재고 상태">
-          <option value="">재고 상태 전체</option>
-          <option value="in">재고 있음</option>
+        <select id="stockFilter" aria-label="신청 가능 상태">
+          <option value="">신청 상태 전체</option>
+          <option value="available">신청 가능</option>
           <option value="low">5개 이하</option>
           <option value="out">품절</option>
-          <option value="unknown">미표기</option>
+          <option value="unknown">재고 확인 필요</option>
         </select>
         <select id="sheetFilter" aria-label="원본 구분"><option value="">전체 구분</option></select>
       </div>
 
       <div class="summary" aria-live="polite">
         <div><strong id="shownCount">0</strong><span>검색 결과</span></div>
-        <div><strong id="inCount">0</strong><span>재고 있음</span></div>
-        <div><strong id="outCount">0</strong><span>품절</span></div>
+        <div><strong id="availableCount">0</strong><span>신청 가능</span></div>
+        <div><strong id="selectedCount">0</strong><span>선택 수량</span></div>
         <p id="updated"></p>
       </div>
     </section>
 
-    <section id="results" class="product-list"></section>
-
+    <section id="results" class="product-list" aria-label="제품 목록"></section>
     <section id="empty" class="empty-state" hidden>
       <strong>검색 결과가 없습니다.</strong>
       <span>검색어나 필터를 다시 확인해주세요.</span>
@@ -62,8 +89,142 @@
     <div id="dialogBody"></div>
   </dialog>
 
-  <button id="topBtn" class="top-btn" type="button" aria-label="맨 위로">↑</button>
+  <dialog id="guideDialog" class="guide-dialog">
+    <button class="dialog-close" type="button" aria-label="닫기">×</button>
+    <div class="dialog-head">
+      <span class="section-kicker">HOW TO ORDER</span>
+      <h2>프리오더 신청 안내</h2>
+    </div>
+    <div class="guide-grid">
+      <article><strong>01</strong><h3>제품 선택</h3><p>제품 카드의 프리오더 담기 버튼을 눌러 원하는 제품과 수량을 선택합니다.</p></article>
+      <article><strong>02</strong><h3>정보 입력</h3><p>주문자 연락처와 배송 또는 방문수령 정보를 입력합니다.</p></article>
+      <article><strong>03</strong><h3>개별 안내</h3><p>담당자가 사양·일정·금액을 확인한 후 결제와 발주 진행 방법을 안내합니다.</p></article>
+    </div>
+    <div class="guide-note">
+      <p>제조사 및 운송 사정에 따라 예상 입고 일정이 변경될 수 있습니다.</p>
+      <p>배송비와 설치비는 제품 및 지역에 따라 별도로 안내될 수 있습니다.</p>
+    </div>
+  </dialog>
 
+  <dialog id="cartDialog" class="cart-dialog">
+    <button class="dialog-close" type="button" aria-label="닫기">×</button>
+
+    <section id="cartStep" class="dialog-step">
+      <div class="dialog-head split-head">
+        <div>
+          <span class="section-kicker">PRE-ORDER LIST</span>
+          <h2>선택한 제품</h2>
+        </div>
+        <button id="clearCartBtn" class="text-btn danger" type="button">전체 삭제</button>
+      </div>
+      <div id="cartItems" class="cart-items"></div>
+      <div id="cartEmpty" class="cart-empty" hidden>
+        <strong>선택한 제품이 없습니다.</strong>
+        <span>제품 목록에서 프리오더 제품을 담아주세요.</span>
+      </div>
+      <div class="cart-total">
+        <div><span>총 수량</span><strong id="cartTotalQty">0개</strong></div>
+        <div><span>상품 금액 합계</span><strong id="cartTotalPrice">0원</strong></div>
+        <p>배송비 및 설치비는 담당자 확인 후 별도로 안내됩니다.</p>
+      </div>
+      <button id="checkoutBtn" class="primary-btn" type="button">신청서 작성하기</button>
+    </section>
+
+    <section id="formStep" class="dialog-step" hidden>
+      <div class="dialog-head split-head">
+        <div>
+          <span class="section-kicker">APPLICATION</span>
+          <h2>프리오더 신청서</h2>
+        </div>
+        <button id="backToCartBtn" class="text-btn" type="button">목록으로</button>
+      </div>
+
+      <div id="formOrderSummary" class="form-order-summary"></div>
+
+      <form id="preorderForm" novalidate>
+        <fieldset>
+          <legend>주문자 정보</legend>
+          <div class="form-grid two-col">
+            <label><span>주문자명 <b>*</b></span><input name="customerName" autocomplete="name" required maxlength="40"></label>
+            <label><span>연락처 <b>*</b></span><input name="customerPhone" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000" required maxlength="30"></label>
+            <label><span>이메일</span><input name="customerEmail" type="email" autocomplete="email" maxlength="100"></label>
+            <label><span>인스타그램 아이디</span><input name="instagram" placeholder="@아이디" maxlength="60"></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>수령 방법 <b>*</b></legend>
+          <div class="method-cards">
+            <label class="method-card">
+              <input type="radio" name="fulfillment" value="delivery" checked>
+              <span><strong>배송</strong><small>주소와 배송 정보를 입력합니다.</small></span>
+            </label>
+            <label class="method-card">
+              <input type="radio" name="fulfillment" value="pickup">
+              <span><strong>매장 방문수령</strong><small>제품 입고 후 방문 가능 일정을 안내드립니다.</small></span>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset id="deliveryFields">
+          <legend>배송 정보</legend>
+          <div class="form-grid two-col">
+            <label><span>수령인 <b>*</b></span><input name="recipientName" autocomplete="shipping name" required maxlength="40"></label>
+            <label><span>수령인 연락처 <b>*</b></span><input name="recipientPhone" inputmode="tel" autocomplete="shipping tel" required maxlength="30"></label>
+            <label class="postcode-field"><span>우편번호 <b>*</b></span><input name="postcode" autocomplete="shipping postal-code" required maxlength="12"></label>
+            <label class="full-field"><span>주소 <b>*</b></span><input name="address" autocomplete="shipping street-address" required maxlength="160"></label>
+            <label class="full-field"><span>상세주소</span><input name="addressDetail" autocomplete="shipping address-line2" maxlength="120"></label>
+            <label><span>엘리베이터</span><select name="elevator"><option value="">선택</option><option>있음</option><option>없음</option><option>해당 없음</option></select></label>
+            <label><span>설치 필요 여부</span><select name="installation"><option value="">선택</option><option>설치 필요</option><option>설치 불필요</option><option>상담 필요</option></select></label>
+            <label class="full-field"><span>배송 요청사항</span><textarea name="deliveryNote" rows="3" maxlength="400" placeholder="출입 방법, 배송 시 참고사항 등을 입력해주세요."></textarea></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>추가 요청사항</legend>
+          <label><textarea name="customerNote" rows="4" maxlength="600" placeholder="제품 사양, 수량 또는 진행과 관련해 전달할 내용을 입력해주세요."></textarea></label>
+        </fieldset>
+
+        <fieldset class="agreement-box">
+          <legend>확인 및 동의</legend>
+          <label class="check-row"><input type="checkbox" name="preorderAgreement" required><span>프리오더 진행 방식과 입고 일정 변동 가능성을 확인했습니다. <b>*</b></span></label>
+          <label class="check-row"><input type="checkbox" name="privacyAgreement" required><span>개인정보 수집 및 이용에 동의합니다. <b>*</b></span></label>
+          <details>
+            <summary>개인정보 수집 안내 보기</summary>
+            <p><strong>수집 항목</strong> 이름, 연락처, 이메일, 인스타그램 아이디, 수령 및 배송 정보</p>
+            <p><strong>수집 목적</strong> 프리오더 상담, 주문 확인, 결제·발주·배송 안내</p>
+            <p><strong>보유 기간</strong> 주문 상담 및 처리 종료 후 3개월</p>
+            <p>정확한 보유 기간과 사업자 정보는 운영 정책에 맞게 게시 전 수정해주세요.</p>
+          </details>
+        </fieldset>
+
+        <label class="honeypot" aria-hidden="true">Leave blank<input name="website" tabindex="-1" autocomplete="off"></label>
+        <p id="formError" class="form-error" role="alert" hidden></p>
+        <button id="submitBtn" class="primary-btn" type="submit">프리오더 신청하기</button>
+      </form>
+    </section>
+
+    <section id="successStep" class="dialog-step success-step" hidden>
+      <span class="success-mark">✓</span>
+      <span class="section-kicker">APPLICATION RECEIVED</span>
+      <h2>프리오더 신청이<br>접수되었습니다.</h2>
+      <p>담당자가 선택 제품과 사양을 확인한 후 입력하신 연락처로 결제 및 발주 방법을 안내드립니다.</p>
+      <div class="receipt-number"><span>접수번호</span><strong id="successRequestId"></strong></div>
+      <button id="successCloseBtn" class="primary-btn" type="button">제품 목록으로 돌아가기</button>
+    </section>
+  </dialog>
+
+  <div id="mobileCartBar" class="mobile-cart-bar" hidden>
+    <button id="mobileCartBtn" type="button">
+      <span><strong id="mobileCartCount">0</strong>개 제품 선택</span>
+      <b>신청서 보기 →</b>
+    </button>
+  </div>
+
+  <button id="topBtn" class="top-btn" type="button" aria-label="맨 위로">↑</button>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="config.js"></script>
   <script src="data.js"></script>
   <script src="app.js"></script>
 </body>

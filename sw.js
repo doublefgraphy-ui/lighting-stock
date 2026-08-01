@@ -1,42 +1,37 @@
-const CACHE = 'lighting-stock-v3-spec-card';
-const CORE = ['./', './index.html', './style.css', './app.js', './data.js', './manifest.webmanifest'];
+const CACHE_NAME = "lighting-stock-preorder-v1";
+const CORE_ASSETS = [
+  "./",
+  "./index.html",
+  "./style.css",
+  "./config.js",
+  "./data.js",
+  "./app.js",
+  "./manifest.webmanifest"
+];
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(CORE)));
+self.addEventListener("install", (event) => {
   self.skipWaiting();
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)));
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });
 
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-  const fresh =
-    url.pathname.endsWith('/index.html') ||
-    url.pathname.endsWith('/style.css') ||
-    url.pathname.endsWith('/app.js') ||
-    url.pathname.endsWith('/data.js') ||
-    url.pathname.includes('/images/');
+self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") return;
 
-  if (fresh) {
-    event.respondWith(
-      fetch(event.request, { cache: 'no-store' })
-        .then((response) => {
-          if (response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE).then((cache) => cache.put(event.request, copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match(event.request))
-    );
-    return;
-  }
-
-  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        return response;
+      })
+      .catch(() => caches.match(event.request).then((cached) => cached || caches.match("./index.html")))
+  );
 });
